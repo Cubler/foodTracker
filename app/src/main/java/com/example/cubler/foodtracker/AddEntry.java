@@ -25,8 +25,19 @@ public class AddEntry extends AppCompatActivity {
 //    private static final Logger LOGGER = new Logger();
 
     static int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
+    private static final int INPUT_SIZE = 224;
+    private static final int IMAGE_MEAN = 117;
+    private static final float IMAGE_STD = 1;
+    private static final String INPUT_NAME = "input";
+    private static final String OUTPUT_NAME = "output";
+
+    private static final String MODEL_FILE = "file:///android_asset/tensorflow_inception_graph.pb";
+    private static final String LABEL_FILE =
+            "file:///android_asset/imagenet_comp_graph_label_strings.txt";
 
     private Bitmap currentBitmap;
+    private Classifier classifier;
+
 
     String[] foods = {"Apple", "Banana", "Carrots", "Dates", "Eggplant"};
     ContentValues values;
@@ -49,6 +60,21 @@ public class AddEntry extends AppCompatActivity {
         imageUri = getContentResolver().insert(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
 
+        try {
+            classifier = TensorFlowImageClassifier.create(
+                    getAssets(),
+                    MODEL_FILE,
+                    LABEL_FILE,
+                    INPUT_SIZE,
+                    IMAGE_MEAN,
+                    IMAGE_STD,
+                    INPUT_NAME,
+                    OUTPUT_NAME);
+//            makeButtonVisible();
+        } catch (final Exception e) {
+            throw new RuntimeException("Error initializing TensorFlow!", e);
+        }
+
     }
 
 
@@ -68,8 +94,11 @@ public class AddEntry extends AppCompatActivity {
 
     public void detect(View v){
 
-//        final List<Classifier.Recognition> results = classifier.recognizeImage(currentBitmap);
-//        Log.v("tag", "Detect: " + results.toString());
+        if(currentBitmap ==null){return;}
+
+        currentBitmap = Bitmap.createScaledBitmap(currentBitmap, INPUT_SIZE, INPUT_SIZE, false);
+        final List<Classifier.Recognition> results = classifier.recognizeImage(currentBitmap);
+        Log.v("tag", "Detect: " + results.toString());
 
     }
 
