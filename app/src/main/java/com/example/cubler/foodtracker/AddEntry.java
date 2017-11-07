@@ -14,10 +14,12 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class AddEntry extends AppCompatActivity {
@@ -25,6 +27,8 @@ public class AddEntry extends AppCompatActivity {
 //    private static final Logger LOGGER = new Logger();
 
     static int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
+    private static String TAG = "AddEntry";
+
     private static final int INPUT_SIZE = 224;
     private static final int IMAGE_MEAN = 117;
     private static final float IMAGE_STD = 1;
@@ -37,7 +41,9 @@ public class AddEntry extends AppCompatActivity {
 
     private Bitmap currentBitmap;
     private Classifier classifier;
-
+    private ListView resultsView;
+    private ListView foodView;
+    private List<String> foodList = new ArrayList<String>();
 
     String[] foods = {"Apple", "Banana", "Carrots", "Dates", "Eggplant"};
     ContentValues values;
@@ -53,6 +59,11 @@ public class AddEntry extends AppCompatActivity {
                     new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                     MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
         }
+
+        resultsView = ((ListView) findViewById(R.id.resultsList));
+        resultsView.setOnItemClickListener(listClickListener);
+
+        foodView = (ListView) findViewById(R.id.foodList);
 
         values = new ContentValues();
         values.put(MediaStore.Images.Media.TITLE, "New Picture");
@@ -85,11 +96,10 @@ public class AddEntry extends AppCompatActivity {
         startActivityForResult(intent, 1);
     }
 
-    public void addFood(View v){
+    public void updateFoodView(){
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_list_item_1, foods);
-        ListView foodList = (ListView) findViewById(R.id.foodList);
-        foodList.setAdapter(adapter);
+                android.R.layout.simple_list_item_1, foodList);
+        foodView.setAdapter(adapter);
     }
 
     public void detect(View v){
@@ -98,11 +108,17 @@ public class AddEntry extends AppCompatActivity {
 
         currentBitmap = Bitmap.createScaledBitmap(currentBitmap, INPUT_SIZE, INPUT_SIZE, false);
         final List<Classifier.Recognition> results = classifier.recognizeImage(currentBitmap);
+
+        String[] resultsString = new String[results.size()];
+        for(int i = 0; i<results.size(); i++){
+            resultsString[i] = results.get(i).toString();
+        }
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+                android.R.layout.simple_list_item_1, resultsString);
+        resultsView.setAdapter(adapter);
         Log.v("tag", "Detect: " + results.toString());
 
     }
-
-
 
     @Override
     protected void onActivityResult(int rc, int resc, Intent data) {
@@ -115,20 +131,25 @@ public class AddEntry extends AppCompatActivity {
             currentBitmap = MediaStore.Images.Media.getBitmap(
                     getContentResolver(), imageUri);
             iv.setImageBitmap(currentBitmap);
-            imageurl = getRealPathFromURI(imageUri);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
     }
 
-    public String getRealPathFromURI(Uri contentUri) {
-        String[] proj = { MediaStore.Images.Media.DATA };
-        Cursor cursor = managedQuery(contentUri, proj, null, null, null);
-        int column_index = cursor
-                .getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-        cursor.moveToFirst();
-        return cursor.getString(column_index);
+    private AdapterView.OnItemClickListener listClickListener = new AdapterView.OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+            String foodItem = adapterView.getItemAtPosition(i).toString();
+            addFoodItemToList(foodItem);
+
+        }
+    };
+
+    public void addFoodItemToList(String foodItem){
+        foodList.add(foodItem);
+        updateFoodView();
     }
+
 
 }

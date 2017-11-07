@@ -11,7 +11,7 @@
     <ImageView
         android:id="@+id/imageView"
         android:layout_width="356dp"
-        android:layout_height="254dp" />
+        android:layout_height="232dp" />
 
     <ListView
         android:id="@+id/foodList"
@@ -37,7 +37,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="0.36"
-            android:onClick="addFood"
             android:text="Add" />
 
         <Button
@@ -51,6 +50,11 @@
             android:layout_alignParentStart="true" />
 
     </LinearLayout>
+
+    <ListView
+        android:id="@+id/resultsList"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
 
 </LinearLayout>
