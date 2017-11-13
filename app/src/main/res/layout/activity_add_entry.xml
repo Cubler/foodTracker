@@ -37,6 +37,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="0.36"
+            android:onClick="addButton"
             android:text="Add" />
 
         <Button
