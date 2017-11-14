@@ -45,6 +45,8 @@ public class AddEntry extends AppCompatActivity {
 //    private static final Logger LOGGER = new Logger();
 
     static int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
+    static int CHOOSEITEM = 2;
+    static int FULLCAMERA = 3;
     static final int REQUEST_IMAGE_CAPTURE = 1;
     private static String TAG = "AddEntry";
     private static Boolean thumbnail = false;
@@ -65,6 +67,7 @@ public class AddEntry extends AppCompatActivity {
     private ListView resultsView;
     private ListView foodView;
     private List<String> foodList = new ArrayList<String>();
+    private List<FoodItem> foodItemList = new ArrayList<FoodItem>();
 
     String[] foods = {"Apple", "Banana", "Carrots", "Dates", "Eggplant"};
     ContentValues values;
@@ -125,7 +128,7 @@ public class AddEntry extends AppCompatActivity {
         }else {
             Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
             intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
-            startActivityForResult(intent, 2);
+            startActivityForResult(intent, FULLCAMERA);
         }
     }
 
@@ -148,14 +151,10 @@ public class AddEntry extends AppCompatActivity {
 
     public void addButton(View v){
         Intent intent = new Intent(this, ChooseItem.class);
-        startActivity(intent);
+        startActivityForResult(intent, CHOOSEITEM);
 
-//        AsyncTask.execute(new Runnable(){
-//            public void run(){
-//                getItemNutrient("01009");
-//            }
-//        });
     }
+
 
     @Override
     protected void onActivityResult(int rc, int resc, Intent data) {
@@ -168,7 +167,7 @@ public class AddEntry extends AppCompatActivity {
             Bundle extras = data.getExtras();
             Bitmap imageBitmap = (Bitmap) extras.get("data");
             iv.setImageBitmap(imageBitmap);
-        }else{
+        }else if(rc == FULLCAMERA){
             try {
                 currentBitmap = MediaStore.Images.Media.getBitmap(
                         getContentResolver(), imageUri);
@@ -176,6 +175,10 @@ public class AddEntry extends AppCompatActivity {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        }else if(rc == CHOOSEITEM){
+            Bundle extras = data.getExtras();
+            FoodItem foodItem = (FoodItem) extras.getParcelable("foodItem");
+            addFoodItemToList(foodItem);
         }
 
 
@@ -195,8 +198,11 @@ public class AddEntry extends AppCompatActivity {
         }
     };
 
-    public void addFoodItemToList(String foodItem){
-        foodList.add(foodItem);
+    public void addFoodItemToList(FoodItem foodItem){
+        foodItemList.add(foodItem);
+
+        foodList.add(String.format("%s: %.2f %s (Calories: %.0f)",
+                foodItem.getName(), foodItem.getServingQuantity(), foodItem.getServingLabel(), foodItem.getCalories()));
         updateFoodView();
     }
 

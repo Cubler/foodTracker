@@ -2,13 +2,16 @@ package com.example.cubler.foodtracker;
 
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Switch;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -19,6 +22,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Dictionary;
+import java.util.HashMap;
 import java.util.List;
 
 public class ChooseItem extends AppCompatActivity{
@@ -28,24 +33,65 @@ public class ChooseItem extends AppCompatActivity{
     private ListView itemSelectList = null;
     private ListView servingSizeSelectList = null;
     private List<String> itemList = new ArrayList<String>();
-    JSONArray JSONitems = null;
+    private List<String> servingSizeList = new ArrayList<String>();
+    private List<String> searchndbnoList = new ArrayList<>();
+    private String ndbno = null;
+    private JSONArray nutrientList =null;
+    private HashMap<String, Integer> nutrientNametoID =  new HashMap<>();
+    private HashMap<Integer, String> nutrientIDtoName =  new HashMap<>();
+    private FoodItem foodItem = new FoodItem();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_choose_item);
         Intent intent = getIntent();
-        final String itemName = intent.getStringExtra("itemName");
+        String itemName = intent.getStringExtra("itemName");
         if(itemName == null){
             //Error
         }
+        initalizeNutrientMap();
         itemSelectList = (ListView) findViewById(R.id.itemSelectList);
         servingSizeSelectList = (ListView) findViewById(R.id.servingSizeSelectList);
         itemSelectList.setOnItemClickListener(ItemChoosenListener);
         servingSizeSelectList.setOnItemClickListener(ServingSizeChoosenListener);
-        GetItemsAsyncTask asyncTask = new GetItemsAsyncTask();
-        asyncTask.execute("butter");
-        
+        GetItemsAsyncTask getItemsAsyncTask = new GetItemsAsyncTask();
+        getItemsAsyncTask.execute("butter");
+
+    }
+
+    public void submitButton(View v){
+        double quanity = Double.parseDouble(((EditText) findViewById(R.id.sizeQuantity)).getText().toString());
+        foodItem.servingQuantity = quanity;
+        Intent resultIntent = new Intent(ChooseItem.this, FoodItem.class);
+        resultIntent.putExtra("foodItem", foodItem);
+        setResult(RESULT_OK,resultIntent);
+        finish();
+
+    }
+
+    public void initalizeNutrientMap(){
+        nutrientNametoID.put("Calories",208);
+        nutrientIDtoName.put(208,"Calories");
+        nutrientNametoID.put("Protein",203);
+        nutrientIDtoName.put(203,"Protein");
+        nutrientNametoID.put("Fat",204);
+        nutrientIDtoName.put(204,"Fat");
+        nutrientNametoID.put("Carbs",205);
+        nutrientIDtoName.put(205,"Carbs");
+        nutrientNametoID.put("Fiber",291);
+        nutrientIDtoName.put(291,"Fiber");
+        nutrientNametoID.put("Sugar",269);
+        nutrientIDtoName.put(269,"Sugar");
+
+        itemSelectList = null;
+        servingSizeSelectList = null;
+        itemList = new ArrayList<String>();
+        servingSizeList = new ArrayList<String>();
+        searchndbnoList = new ArrayList<>();
+        ndbno = null;
+        nutrientList =null;
+        foodItem = new FoodItem();
 
     }
 
@@ -54,6 +100,7 @@ public class ChooseItem extends AppCompatActivity{
             for (int i = 0; i < items.length(); i++) {
                 String itemName = items.getJSONObject(i).getString("name");
                 itemList.add(itemName);
+                searchndbnoList.add( items.getJSONObject(i).getString("ndbno"));
             }
         }catch(Exception e){
             e.printStackTrace();
@@ -64,12 +111,34 @@ public class ChooseItem extends AppCompatActivity{
         itemSelectList.setAdapter(adapter);
     }
 
+    public void populateServingSizeList(JSONArray measures){
+        servingSizeList = new ArrayList<String>();
+        try {
+            for (int i = 0; i < measures.length(); i++) {
+                String label = measures.getJSONObject(i).getString("label");
+                String qty = measures.getJSONObject(i).getString("qty");
+                String sizeUnit = measures.getJSONObject(i).getString("eunit"); // typically grams
+                String sizeAmount = measures.getJSONObject(i).getString("eqv"); // what the label equals in the sizeUnit ex. 1oz = 28.35
+                servingSizeList.add(String.format("%s %s (%s %s)",qty, label,sizeAmount, sizeUnit));
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+                android.R.layout.simple_list_item_1, servingSizeList);
+        servingSizeSelectList.setAdapter(adapter);
+    }
+
     private AdapterView.OnItemClickListener ItemChoosenListener = new AdapterView.OnItemClickListener() {
         @Override
         public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
             String itemChoosen = adapterView.getItemAtPosition(i).toString();
+            foodItem.name = itemChoosen;
+            ndbno = searchndbnoList.get(i);
+            GetNutrientsAsyncTask getNutrientsAsyncTask = new GetNutrientsAsyncTask();
+            getNutrientsAsyncTask.execute(ndbno);
 
-//            addFoodItemToList(foodItem);
         }
     };
 
@@ -77,24 +146,61 @@ public class ChooseItem extends AppCompatActivity{
         @Override
         public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
             String ServingSize = adapterView.getItemAtPosition(i).toString();
-
-//            addFoodItemToList(foodItem);
+            parseNutrientInfo(i);
         }
     };
 
-    public JSONObject getItemNutrient(String input_ndbno){
+    public void parseNutrientInfo(int measureIndex){
+        try {
+            JSONObject measurements = nutrientList.getJSONObject(0).getJSONArray("measures").getJSONObject(measureIndex);
+            foodItem.servingLabel = measurements.getString("label");
+
+            for (int j = 0; j < nutrientList.length(); j++) {
+                JSONObject nutrientJSON = nutrientList.getJSONObject(j);
+                int nutrient_id = nutrientJSON.getInt("nutrient_id");
+                if(nutrientIDtoName.containsKey(nutrient_id)){
+                    String nutrientName = nutrientIDtoName.get(nutrient_id);
+
+                    switch (nutrientName) {
+                        case "Calories":
+                            foodItem.calories = nutrientJSON.getJSONArray("measures").getJSONObject(measureIndex).getDouble("value");
+                            break;
+                        case "Protein":
+                            foodItem.protein = nutrientJSON.getJSONArray("measures").getJSONObject(measureIndex).getDouble("value");
+                            break;
+                        case "Fat":
+                            foodItem.fat = nutrientJSON.getJSONArray("measures").getJSONObject(measureIndex).getDouble("value");
+                            break;
+                        case "Carbs":
+                            foodItem.carbs = nutrientJSON.getJSONArray("measures").getJSONObject(measureIndex).getDouble("value");
+                            break;
+                        case "Sugar":
+                            foodItem.sugar = nutrientJSON.getJSONArray("measures").getJSONObject(measureIndex).getDouble("value");
+                            break;
+                        default:
+                            Log.v(TAG,"NutrientName in Map but not in switch case");
+                    }
+                }else{
+                    continue;
+                }
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+    public JSONArray getItemNutrient(String input_ndbno){
         // API call following format at https://ndb.nal.usda.gov/ndb/doc/apilist/API-FOOD-REPORT.md
         JSONObject jsonHead = null;
         String type = "b";
         String format = "json";
-        JSONObject nutrients = null;
+        JSONArray nutrients = null;
 
         String queryResult = getHttpRequest(USDAURL, false,
                 new String[]{"ndbno","type", "format"}, new String[]{input_ndbno, type, format});
 
         try {
             jsonHead = new JSONObject(queryResult);
-            nutrients = jsonHead.getJSONObject("report").getJSONObject("food").getJSONObject("nutrients");
+            nutrients = jsonHead.getJSONObject("report").getJSONObject("food").getJSONArray("nutrients");
 
         }catch(Exception e){
             e.printStackTrace();
@@ -102,7 +208,6 @@ public class ChooseItem extends AppCompatActivity{
 
         return nutrients;
     }
-
     public JSONArray getItems(String name){
         // API call following format at https://ndb.nal.usda.gov/ndb/doc/apilist/API-SEARCH.md
         String ndbno = null;
@@ -132,8 +237,6 @@ public class ChooseItem extends AppCompatActivity{
 
         String output = null;
         int timeout = 1000*5;
-
-
         String url = _url;
         if(search){
             url +="search/";
@@ -182,14 +285,28 @@ public class ChooseItem extends AppCompatActivity{
     }
 
     private class GetItemsAsyncTask extends AsyncTask<String, Void, JSONArray>{
-        protected JSONArray doInBackground(String... foodName){
-            JSONArray JSONitems = getItems(foodName[0]);
+        protected JSONArray doInBackground(String... args){
+            JSONArray JSONitems = getItems(args[0]);
             return JSONitems;
         }
-
         @Override
         protected void onPostExecute(JSONArray jsonArray) {
             populateItemList(jsonArray);
+        }
+    }
+    private class GetNutrientsAsyncTask extends AsyncTask<String, Void, JSONArray>{
+        protected JSONArray doInBackground(String... args){
+            JSONArray nutrients = getItemNutrient(args[0]);
+            return nutrients;
+        }
+        @Override
+        protected void onPostExecute(JSONArray nutrients){
+            try {
+                nutrientList = nutrients;
+                populateServingSizeList(nutrients.getJSONObject(0).getJSONArray("measures"));
+            }catch(Exception e){
+                e.printStackTrace();
+            }
         }
     }
 }

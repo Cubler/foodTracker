@@ -11,7 +11,8 @@
     <ListView
         android:id="@+id/itemSelectList"
         android:layout_width="match_parent"
-        android:layout_height="256dp" />
+        android:layout_height="256dp"
+        android:layout_weight="0.96" />
 
     <ImageView
         android:id="@+id/imageView2"
@@ -22,8 +23,7 @@
     <ListView
         android:id="@+id/servingSizeSelectList"
         android:layout_width="match_parent"
-        android:layout_height="171dp"
-        android:layout_weight="3.92" />
+        android:layout_height="229dp" />
 
     <ImageView
         android:id="@+id/imageView3"
@@ -41,7 +41,8 @@
             android:layout_width="93dp"
             android:layout_height="wrap_content"
             android:ems="10"
-            android:inputType="textPersonName"
+            android:inputType="none"
+            android:editable="false"
             android:selectAllOnFocus="false"
             android:text="Quantity:" />
 
@@ -58,7 +59,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:onClick="submitButton"
             android:text="Submit" />
+
     </LinearLayout>
 
 </LinearLayout>
