@@ -7,6 +7,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
@@ -48,15 +49,18 @@ public class ChooseItem extends AppCompatActivity{
         Intent intent = getIntent();
         String itemName = intent.getStringExtra("itemName");
         if(itemName == null){
-            //Error
+            setResult(RESULT_CANCELED);
+            finish();
         }
         initalizeNutrientMap();
         itemSelectList = (ListView) findViewById(R.id.itemSelectList);
+        itemSelectList.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
         servingSizeSelectList = (ListView) findViewById(R.id.servingSizeSelectList);
+        servingSizeSelectList.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
         itemSelectList.setOnItemClickListener(ItemChoosenListener);
         servingSizeSelectList.setOnItemClickListener(ServingSizeChoosenListener);
         GetItemsAsyncTask getItemsAsyncTask = new GetItemsAsyncTask();
-        getItemsAsyncTask.execute("butter");
+        getItemsAsyncTask.execute(itemName);
 
     }
 
@@ -67,7 +71,6 @@ public class ChooseItem extends AppCompatActivity{
         resultIntent.putExtra("foodItem", foodItem);
         setResult(RESULT_OK,resultIntent);
         finish();
-
     }
 
     public void initalizeNutrientMap(){
@@ -133,18 +136,21 @@ public class ChooseItem extends AppCompatActivity{
     private AdapterView.OnItemClickListener ItemChoosenListener = new AdapterView.OnItemClickListener() {
         @Override
         public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+            adapterView.requestFocusFromTouch();
+            adapterView.setSelection(i);
             String itemChoosen = adapterView.getItemAtPosition(i).toString();
             foodItem.name = itemChoosen;
             ndbno = searchndbnoList.get(i);
             GetNutrientsAsyncTask getNutrientsAsyncTask = new GetNutrientsAsyncTask();
             getNutrientsAsyncTask.execute(ndbno);
-
         }
     };
 
     private AdapterView.OnItemClickListener ServingSizeChoosenListener = new AdapterView.OnItemClickListener() {
         @Override
         public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+            adapterView.requestFocusFromTouch();
+            adapterView.setSelection(i);
             String ServingSize = adapterView.getItemAtPosition(i).toString();
             parseNutrientInfo(i);
         }

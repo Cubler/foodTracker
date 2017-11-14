@@ -2,6 +2,7 @@ package com.example.cubler.foodtracker;
 
 import android.Manifest;
 import android.content.ContentValues;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -12,12 +13,16 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.text.InputType;
 import android.util.JsonReader;
 import android.util.Log;
 import android.view.View;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 
@@ -68,6 +73,8 @@ public class AddEntry extends AppCompatActivity {
     private ListView foodView;
     private List<String> foodList = new ArrayList<String>();
     private List<FoodItem> foodItemList = new ArrayList<FoodItem>();
+    private String foodname = null;
+    private String otherFoodName = null;
 
     String[] foods = {"Apple", "Banana", "Carrots", "Dates", "Eggplant"};
     ContentValues values;
@@ -92,6 +99,7 @@ public class AddEntry extends AppCompatActivity {
         }
 
         resultsView = ((ListView) findViewById(R.id.resultsList));
+        resultsView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
         resultsView.setOnItemClickListener(listClickListener);
 
         foodView = (ListView) findViewById(R.id.foodList);
@@ -138,10 +146,14 @@ public class AddEntry extends AppCompatActivity {
         currentBitmap = Bitmap.createScaledBitmap(currentBitmap, INPUT_SIZE, INPUT_SIZE, false);
         final List<Classifier.Recognition> results = classifier.recognizeImage(currentBitmap);
 
-        String[] resultsString = new String[results.size()];
+        String[] resultsString = new String[results.size()+1];
         for(int i = 0; i<results.size(); i++){
-            resultsString[i] = results.get(i).toString();
+            String item = results.get(i).toString();
+            item = item.substring(item.indexOf(" ")).trim();
+
+            resultsString[i] = item;
         }
+        resultsString[results.size()] = "Other";
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_list_item_1, resultsString);
         resultsView.setAdapter(adapter);
@@ -150,11 +162,57 @@ public class AddEntry extends AppCompatActivity {
     }
 
     public void addButton(View v){
-        Intent intent = new Intent(this, ChooseItem.class);
-        startActivityForResult(intent, CHOOSEITEM);
 
+        if(foodname =="Other"){
+            getOtherInput();
+        }else if(foodname == null || foodname == ""){
+            return;
+        }else {
+            launchChooseItemActivity(foodname);
+        }
     }
 
+    public void launchSelectionHelper(){
+        if(foodname =="Other"){
+            getOtherInput();
+        }else if(foodname == null || foodname == ""){
+            return;
+        }else {
+            launchChooseItemActivity(foodname);
+        }
+    }
+
+    public void launchChooseItemActivity(String fname){
+        Intent intent = new Intent(getApplicationContext(), ChooseItem.class);
+        intent.putExtra("itemName",fname);
+        startActivityForResult(intent, CHOOSEITEM);
+    }
+
+    public void getOtherInput(){
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Enter Food");
+
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        builder.setView(input);
+
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                otherFoodName = input.getText().toString();
+                launchChooseItemActivity(otherFoodName);
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+
+        builder.show();
+    }
 
     @Override
     protected void onActivityResult(int rc, int resc, Intent data) {
@@ -175,7 +233,7 @@ public class AddEntry extends AppCompatActivity {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }else if(rc == CHOOSEITEM){
+        }else if(rc == CHOOSEITEM && resc == RESULT_OK){
             Bundle extras = data.getExtras();
             FoodItem foodItem = (FoodItem) extras.getParcelable("foodItem");
             addFoodItemToList(foodItem);
@@ -186,21 +244,16 @@ public class AddEntry extends AppCompatActivity {
 
 //    Listener gets notified when an item in the list of predicted possible items is choosen
     private AdapterView.OnItemClickListener listClickListener = new AdapterView.OnItemClickListener() {
-        @Override
         public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-            String foodItem = adapterView.getItemAtPosition(i).toString();
-
-            Intent intent = new Intent(getApplicationContext(), ChooseItem.class);
-            intent.putExtra("itemName",foodItem);
-            startActivity(intent);
-//            addFoodItemToList(foodItem);
-
+            adapterView.requestFocusFromTouch();
+            adapterView.setSelection(i);
+            foodname = adapterView.getItemAtPosition(i).toString().split(" ")[0];
+            launchSelectionHelper();
         }
     };
 
     public void addFoodItemToList(FoodItem foodItem){
         foodItemList.add(foodItem);
-
         foodList.add(String.format("%s: %.2f %s (Calories: %.0f)",
                 foodItem.getName(), foodItem.getServingQuantity(), foodItem.getServingLabel(), foodItem.getCalories()));
         updateFoodView();
