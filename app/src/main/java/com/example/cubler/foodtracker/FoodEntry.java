@@ -3,6 +3,9 @@ package com.example.cubler.foodtracker;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -17,6 +20,17 @@ public class FoodEntry implements Parcelable {
     private String name = null;
 
     public FoodEntry(){
+    }
+    public FoodEntry(JSONArray jsonArray){
+        try {
+            name = jsonArray.getJSONObject(0).getString("name");
+            for (int i = 1; i < jsonArray.length(); i++) {
+                FoodItem foodItem = new FoodItem(jsonArray.getJSONObject(i));
+                foodItemList.add(foodItem);
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
     }
     public FoodEntry(FoodItem foodItem){
         foodItemList.add(foodItem);
@@ -79,6 +93,21 @@ public class FoodEntry implements Parcelable {
             total += foodItem.getSugar();
         }
         return total;
+    }
+
+    public JSONArray toJSON(){
+        JSONArray jsonArray = new JSONArray();
+        JSONObject jsonName = new JSONObject();
+        try {
+            jsonName.put("name", getName());
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+            jsonArray.put(jsonName);
+        for(FoodItem foodItem: foodItemList){
+            jsonArray.put(foodItem.toJSON());
+        }
+        return jsonArray;
     }
 
     @Override

@@ -3,6 +3,8 @@ package com.example.cubler.foodtracker;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import org.json.JSONObject;
+
 /**
  * Created by cubler on 11/13/17.
  */
@@ -49,6 +51,23 @@ public class FoodItem implements Parcelable{
         this.servingQuantity = quantity;
     }
 
+    public FoodItem(JSONObject jsonObject){
+
+        try {
+            this.name = jsonObject.getString("name");
+            this.calories = jsonObject.getDouble("calories");
+            this.carbs = jsonObject.getDouble("carbs");
+            this.fat = jsonObject.getDouble("fat");
+            this.protein = jsonObject.getDouble("protein");
+            this.sugar = jsonObject.getDouble("sugar");
+            this.servingLabel = jsonObject.getString("servingLabel");
+            this.servingQuantity = jsonObject.getDouble("servingQuantity");
+
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+
     public double getCalories(){
         return calories*servingQuantity;
     }
@@ -79,6 +98,23 @@ public class FoodItem implements Parcelable{
 
     public double getServingQuantity() {
         return servingQuantity;
+    }
+
+    public JSONObject toJSON(){
+        JSONObject jsonObject = new JSONObject();
+        try {
+            jsonObject.put("name", name);
+            jsonObject.put("calories", calories);
+            jsonObject.put("carbs", carbs);
+            jsonObject.put("fat", fat);
+            jsonObject.put("protein", protein);
+            jsonObject.put("sugar", sugar);
+            jsonObject.put("servingLabel", servingLabel);
+            jsonObject.put("servingQuantity", servingQuantity);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return jsonObject;
     }
 
     @Override
