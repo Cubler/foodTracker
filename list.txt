@@ -1,0 +1,12 @@
+app
+build
+build.gradle
+foodTracker.iml
+gradle
+gradle.properties
+gradlew
+gradlew.bat
+list.txt
+local.properties
+README.md
+settings.gradle

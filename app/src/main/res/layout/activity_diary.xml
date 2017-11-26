@@ -4,8 +4,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.example.cubler.foodtracker.DiaryActivity">
+    tools:context="com.example.cubler.foodtracker.DiaryActivity"
+    android:weightSum="1">
 
+
+    <ListView
+        android:id="@+id/foodEntryList"
+        android:layout_width="match_parent"
+        android:layout_height="243dp"
+        android:layout_weight="0.13" />
 
     <Button
         android:id="@+id/button3"
@@ -13,4 +20,147 @@
         android:layout_height="wrap_content"
         android:onClick="goToAddEntry"
         android:text="Add Entry" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="320dp"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/editText3"
+                android:layout_width="93dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.22"
+                android:editable="false"
+                android:ems="10"
+                android:inputType="none"
+                android:selectAllOnFocus="false"
+                android:text="Calories" />
+
+            <EditText
+                android:id="@+id/caloriesText"
+                android:layout_width="71dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:inputType="none"
+                android:text="1.0"
+                android:textAlignment="center" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/editText3"
+                android:layout_width="93dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.22"
+                android:editable="false"
+                android:ems="10"
+                android:inputType="none"
+                android:selectAllOnFocus="false"
+                android:text="Fat" />
+
+            <EditText
+                android:id="@+id/fatText"
+                android:layout_width="71dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:inputType="none"
+                android:text="1.0"
+                android:textAlignment="center" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/editText3"
+                android:layout_width="93dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.22"
+                android:editable="false"
+                android:ems="10"
+                android:inputType="none"
+                android:selectAllOnFocus="false"
+                android:text="Carbs" />
+
+            <EditText
+                android:id="@+id/carbsText"
+                android:layout_width="71dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:inputType="none"
+                android:text="1.0"
+                android:textAlignment="center" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/editText3"
+                android:layout_width="93dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.22"
+                android:editable="false"
+                android:ems="10"
+                android:inputType="none"
+                android:selectAllOnFocus="false"
+                android:text="Sugar" />
+
+            <EditText
+                android:id="@+id/sugarText"
+                android:layout_width="71dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:inputType="none"
+                android:text="1.0"
+                android:textAlignment="center" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/editText3"
+                android:layout_width="93dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.22"
+                android:editable="false"
+                android:ems="10"
+                android:inputType="none"
+                android:selectAllOnFocus="false"
+                android:text="Protein" />
+
+            <EditText
+                android:id="@+id/proteinText"
+                android:layout_width="71dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:inputType="none"
+                android:text="1.0"
+                android:textAlignment="center" />
+        </LinearLayout>
+
+    </LinearLayout>
+
 </LinearLayout>

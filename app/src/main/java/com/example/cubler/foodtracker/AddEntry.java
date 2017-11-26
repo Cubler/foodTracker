@@ -25,6 +25,7 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -77,7 +78,7 @@ public class AddEntry extends AppCompatActivity {
     private ListView resultsView;
     private ListView foodView;
     private List<String> foodList = new ArrayList<String>();
-    private List<FoodItem> foodItemList = new ArrayList<FoodItem>();
+    private FoodEntry foodEntry = new FoodEntry();
     private String foodname = null;
     private String otherFoodName = null;
 
@@ -97,7 +98,6 @@ public class AddEntry extends AppCompatActivity {
         }
         if(ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET)
                 == PackageManager.PERMISSION_DENIED){
-
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.INTERNET},
                     2);
@@ -114,7 +114,7 @@ public class AddEntry extends AppCompatActivity {
         values.put(MediaStore.Images.Media.DESCRIPTION, "From your Camera");
         imageUri = getContentResolver().insert(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-
+        defaultDetectView();
         try {
             classifier = TensorFlowImageClassifier.create(
                     getAssets(),
@@ -166,15 +166,21 @@ public class AddEntry extends AppCompatActivity {
 
     }
 
-    public void addButton(View v){
+    public void defaultDetectView(){
+        String[] resultsString = {"Other"};
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+                android.R.layout.simple_list_item_1, resultsString);
+        resultsView.setAdapter(adapter);
 
-        if(foodname =="Other"){
-            getOtherInput();
-        }else if(foodname == null || foodname == ""){
-            return;
-        }else {
-            launchChooseItemActivity(foodname);
-        }
+    }
+
+    public void addButton(View v){
+        TextView entryName = (TextView) findViewById(R.id.entryNameText);
+        foodEntry.setName(entryName.getText().toString());
+        Intent resultIntent = new Intent(AddEntry.this, FoodEntry.class);
+        resultIntent.putExtra("foodEntry", foodEntry);
+        setResult(RESULT_OK, resultIntent);
+        finish();
     }
 
     public void launchSelectionHelper(){
@@ -258,7 +264,7 @@ public class AddEntry extends AppCompatActivity {
     };
 
     public void addFoodItemToList(FoodItem foodItem){
-        foodItemList.add(foodItem);
+        foodEntry.addFoodItem(foodItem);
         foodList.add(String.format("%s: %.2f %s (Calories: %.0f)",
                 foodItem.getName(), foodItem.getServingQuantity(), foodItem.getServingLabel(), foodItem.getCalories()));
         updateFoodView();
