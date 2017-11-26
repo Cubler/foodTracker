@@ -1,10 +1,12 @@
 package com.example.cubler.foodtracker;
 
 import android.content.ContentValues;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.AdapterView;
@@ -20,6 +22,7 @@ import java.util.List;
 public class DiaryActivity extends AppCompatActivity {
 
     static int ADDENTRY = 4;
+    static int EDITENTRY = 5;
     private List<FoodEntry> foodEntryList = new ArrayList<>();
     private EditText calorieText = null;
     private EditText fatText = null;
@@ -29,6 +32,8 @@ public class DiaryActivity extends AppCompatActivity {
     private EditText dateText = null;
     private ListView foodEntryListView = null;
     private DateDBHelper dateDBHelper =null;
+    private int selectedFoodEntry = -1;
+    private String date = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,8 +50,9 @@ public class DiaryActivity extends AppCompatActivity {
         dateDBHelper = new DateDBHelper(getApplicationContext());
 
         Intent intent = getIntent();
-        String date = intent.getStringExtra("date");
+        date = intent.getStringExtra("date");
         if(date != null){
+            dateText.setText(date);
             loadDate(date);
         }
 
@@ -56,6 +62,38 @@ public class DiaryActivity extends AppCompatActivity {
         Intent intent = new Intent(this, AddEntry.class);
         startActivityForResult(intent, ADDENTRY);
     }
+    public void editFoodEntry(View v){
+        Intent intent = new Intent(this, AddEntry.class);
+        if(selectedFoodEntry == -1){
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage("Please Select a Food Entry").setTitle("Invalid Food Entry");
+            AlertDialog dialog = builder.create();
+            return;
+        }
+        intent.putExtra("foodEntry", foodEntryList.get(selectedFoodEntry));
+        startActivityForResult(intent, EDITENTRY);
+    }
+    public void deleteEntry(View v){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Are you sure you want to Delete this Food Entry?").setTitle("Delete Food Entry");
+
+        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                SQLiteDatabase dbW = dateDBHelper.getWritableDatabase();
+                dbW.delete(DateEntryContract.DateEntry.TABLE_NAME, DateEntryContract.DateEntry.DATE + "=" + date, null);
+                finish();
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        builder.show();
+
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -64,6 +102,14 @@ public class DiaryActivity extends AppCompatActivity {
             FoodEntry foodEntry = (FoodEntry) extras.getParcelable("foodEntry");
             foodEntryList.add(foodEntry);
             updateFoodEntryView();
+        }if(requestCode == EDITENTRY && resultCode == RESULT_OK){
+            Bundle extras = data.getExtras();
+            FoodEntry foodEntry = (FoodEntry) extras.getParcelable("foodEntry");
+            foodEntryList.remove(selectedFoodEntry);
+            if(!foodEntry.isEmpty()) {
+                foodEntryList.add(foodEntry);
+                updateFoodEntryView();
+            }
         }
     }
 
@@ -101,15 +147,13 @@ public class DiaryActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         updateFoodEntryView();
-
     }
-
-
 
     private AdapterView.OnItemClickListener listClickListener = new AdapterView.OnItemClickListener() {
         public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
             adapterView.requestFocusFromTouch();
             adapterView.setSelection(i);
+            selectedFoodEntry = i;
             String entryClicked = adapterView.getItemAtPosition(i).toString();
             if(entryClicked.equals("Total")){
                 FoodEntry[] foodEntryArray = foodEntryList.toArray(new FoodEntry[foodEntryList.size()]);

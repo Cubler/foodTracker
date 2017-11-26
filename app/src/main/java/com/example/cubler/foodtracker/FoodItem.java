@@ -117,6 +117,10 @@ public class FoodItem implements Parcelable{
         return jsonObject;
     }
 
+    public String getInfo(){
+        return String.format("%s: %.2f %s (Calories: %.0f)",
+                getName(), getServingQuantity(), getServingLabel(), getCalories());
+    }
     @Override
     public void writeToParcel(Parcel parcel, int i) {
         parcel.writeString(this.name);

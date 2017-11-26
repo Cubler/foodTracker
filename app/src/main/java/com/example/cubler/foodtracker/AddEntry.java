@@ -22,6 +22,7 @@ import android.view.View;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -71,43 +72,29 @@ public class AddEntry extends AppCompatActivity {
         private static final String MODEL_FILE = "file:///android_asset/veg_101_graph.pb";
     private static final String LABEL_FILE =
             "file:///android_asset/veg_101_labels.txt";
-    private static final String USDAURL = "https://api.nal.usda.gov/ndb/reports/";
 
     private Bitmap currentBitmap;
     private Classifier classifier;
     private ListView resultsView;
     private ListView foodView;
-    private List<String> foodList = new ArrayList<String>();
     private FoodEntry foodEntry = new FoodEntry();
     private String foodname = null;
     private String otherFoodName = null;
+    private int selectedFoodItem = -1;
 
-    String[] foods = {"Apple", "Banana", "Carrots", "Dates", "Eggplant"};
     ContentValues values;
     Uri imageUri;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_entry);
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-            == PackageManager.PERMISSION_DENIED){
-
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
-        }
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET)
-                == PackageManager.PERMISSION_DENIED){
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.INTERNET},
-                    2);
-        }
 
         resultsView = ((ListView) findViewById(R.id.resultsList));
         resultsView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
         resultsView.setOnItemClickListener(listClickListener);
 
         foodView = (ListView) findViewById(R.id.foodList);
+        foodView.setOnItemClickListener(foodItemListClickListener);
 
         values = new ContentValues();
         values.put(MediaStore.Images.Media.TITLE, "New Picture");
@@ -115,6 +102,14 @@ public class AddEntry extends AppCompatActivity {
         imageUri = getContentResolver().insert(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
         defaultDetectView();
+
+        Intent intent = getIntent();
+        FoodEntry foodEntryInput = intent.getParcelableExtra("foodEntry");
+        if(foodEntryInput != null){
+            foodEntry = foodEntryInput;
+            ((Button) findViewById(R.id.addSaveButton)).setText("Save");
+            updateFoodView();
+        }
         try {
             classifier = TensorFlowImageClassifier.create(
                     getAssets(),
@@ -131,7 +126,6 @@ public class AddEntry extends AppCompatActivity {
         }
     }
 
-
     public void camera(View v) {
         if(thumbnail){
             Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -147,10 +141,8 @@ public class AddEntry extends AppCompatActivity {
 
     public void detect(View v){
         if(currentBitmap ==null){return;}
-
         currentBitmap = Bitmap.createScaledBitmap(currentBitmap, INPUT_SIZE, INPUT_SIZE, false);
         final List<Classifier.Recognition> results = classifier.recognizeImage(currentBitmap);
-
         String[] resultsString = new String[results.size()+1];
         for(int i = 0; i<results.size(); i++){
             String item = results.get(i).toString();
@@ -163,7 +155,6 @@ public class AddEntry extends AppCompatActivity {
                 android.R.layout.simple_list_item_1, resultsString);
         resultsView.setAdapter(adapter);
         Log.v("tag", "Detect: " + results.toString());
-
     }
 
     public void defaultDetectView(){
@@ -171,10 +162,17 @@ public class AddEntry extends AppCompatActivity {
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_list_item_1, resultsString);
         resultsView.setAdapter(adapter);
-
     }
 
     public void addButton(View v){
+
+        if(foodEntry.isEmpty()) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Food Entry is Empty").setMessage("Food Entry is Empty");
+            builder.show();
+            return;
+        }
+
         TextView entryName = (TextView) findViewById(R.id.entryNameText);
         foodEntry.setName(entryName.getText().toString());
         Intent resultIntent = new Intent(AddEntry.this, FoodEntry.class);
@@ -203,7 +201,6 @@ public class AddEntry extends AppCompatActivity {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Enter Food");
-
         final EditText input = new EditText(this);
         input.setInputType(InputType.TYPE_CLASS_TEXT);
         builder.setView(input);
@@ -221,7 +218,6 @@ public class AddEntry extends AppCompatActivity {
                 dialog.cancel();
             }
         });
-
         builder.show();
     }
 
@@ -247,13 +243,12 @@ public class AddEntry extends AppCompatActivity {
         }else if(rc == CHOOSEITEM && resc == RESULT_OK){
             Bundle extras = data.getExtras();
             FoodItem foodItem = (FoodItem) extras.getParcelable("foodItem");
-            addFoodItemToList(foodItem);
+            foodEntry.addFoodItem(foodItem);
+            updateFoodView();
         }
-
-
     }
 
-//    Listener gets notified when an item in the list of predicted possible items is choosen
+//    Listener for detect gets notified when an item in the list of predicted possible items is choosen
     private AdapterView.OnItemClickListener listClickListener = new AdapterView.OnItemClickListener() {
         public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
             adapterView.requestFocusFromTouch();
@@ -263,21 +258,33 @@ public class AddEntry extends AppCompatActivity {
         }
     };
 
-    public void addFoodItemToList(FoodItem foodItem){
-        foodEntry.addFoodItem(foodItem);
-        foodList.add(String.format("%s: %.2f %s (Calories: %.0f)",
-                foodItem.getName(), foodItem.getServingQuantity(), foodItem.getServingLabel(), foodItem.getCalories()));
+    private AdapterView.OnItemClickListener foodItemListClickListener = new AdapterView.OnItemClickListener() {
+        public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+            adapterView.requestFocusFromTouch();
+            adapterView.setSelection(i);
+            selectedFoodItem = i;
+        }
+    };
+
+    public void removeFoodItem(View v){
+        if(selectedFoodItem == -1){
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage("Please Select a Food Item").setTitle("Invalid Food Item");
+            AlertDialog dialog = builder.create();
+            return;
+        }
+        foodEntry.removeFoodItem(selectedFoodItem);
         updateFoodView();
     }
 
     public void updateFoodView(){
+        List<String> foodList = new ArrayList<String>();
+        for(FoodItem foodItem: foodEntry.getFoodItems()){
+            foodList.add(foodItem.getInfo());
+        }
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_list_item_1, foodList);
         foodView.setAdapter(adapter);
     }
-
-
-
-
 
 }

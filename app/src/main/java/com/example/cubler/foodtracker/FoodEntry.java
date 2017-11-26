@@ -44,7 +44,14 @@ public class FoodEntry implements Parcelable {
         foodItemList = new ArrayList<FoodItem>();
         setName(in.readString());
         in.readTypedList(foodItemList, FoodItem.CREATOR);
+    }
 
+    public FoodItem[] getFoodItems(){
+        return foodItemList.toArray(new FoodItem[foodItemList.size()]);
+    }
+
+    public void removeFoodItem(int index){
+        foodItemList.remove(index);
     }
 
     public void setName(String name) {
@@ -53,6 +60,10 @@ public class FoodEntry implements Parcelable {
 
     public String getName() {
         return name;
+    }
+
+    public boolean isEmpty(){
+        return foodItemList.isEmpty();
     }
 
     public void addFoodItem(FoodItem foodItem){

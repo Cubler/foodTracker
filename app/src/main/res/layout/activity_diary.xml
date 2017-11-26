@@ -16,16 +16,38 @@
 
     <LinearLayout
         android:layout_width="match_parent"
+        android:layout_height="36dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/button2"
+            android:layout_width="216dp"
+            android:layout_height="wrap_content"
+            android:onClick="deleteEntry"
+            android:text="Delete" />
+
+        <Button
+            android:id="@+id/button7"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="editFoodEntry"
+            android:text="Edit" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="39dp"
         android:orientation="horizontal">
 
         <EditText
             android:id="@+id/dateText"
-            android:layout_width="159dp"
+            android:layout_width="81dp"
             android:layout_height="wrap_content"
             android:ems="10"
-            android:inputType="date"
-            android:text="12/1" />
+            android:inputType="numberDecimal"
+            android:text="12.1" />
 
         <Button
             android:id="@+id/save"

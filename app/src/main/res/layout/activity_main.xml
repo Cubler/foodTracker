@@ -24,7 +24,7 @@
             android:layout_width="123dp"
             android:layout_height="wrap_content"
             android:ems="10"
-            android:inputType="text" />
+            android:inputType="numberDecimal" />
 
         <Button
             android:id="@+id/button6"
