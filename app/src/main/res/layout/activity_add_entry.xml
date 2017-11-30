@@ -34,7 +34,7 @@
             android:selectAllOnFocus="false"
             android:text="Entry Name:" />
 
-        <TextView
+        <EditText
             android:id="@+id/entryNameText"
             android:layout_width="248dp"
             android:layout_height="55dp"

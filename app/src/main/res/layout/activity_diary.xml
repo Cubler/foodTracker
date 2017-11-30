@@ -47,7 +47,7 @@
             android:layout_height="wrap_content"
             android:ems="10"
             android:inputType="numberDecimal"
-            android:text="12.1" />
+            android:text="mm.dd" />
 
         <Button
             android:id="@+id/save"
@@ -94,7 +94,7 @@
                 android:layout_weight="1"
                 android:ems="10"
                 android:inputType="none"
-                android:text="1.0"
+                android:text="0.0"
                 android:textAlignment="center" />
         </LinearLayout>
 
@@ -121,7 +121,7 @@
                 android:layout_weight="1"
                 android:ems="10"
                 android:inputType="none"
-                android:text="1.0"
+                android:text="0.0"
                 android:textAlignment="center" />
         </LinearLayout>
 
@@ -148,7 +148,7 @@
                 android:layout_weight="1"
                 android:ems="10"
                 android:inputType="none"
-                android:text="1.0"
+                android:text="0.0"
                 android:textAlignment="center" />
         </LinearLayout>
 
@@ -175,7 +175,7 @@
                 android:layout_weight="1"
                 android:ems="10"
                 android:inputType="none"
-                android:text="1.0"
+                android:text="0.0"
                 android:textAlignment="center" />
         </LinearLayout>
 
@@ -202,7 +202,7 @@
                 android:layout_weight="1"
                 android:ems="10"
                 android:inputType="none"
-                android:text="1.0"
+                android:text="0.0"
                 android:textAlignment="center" />
         </LinearLayout>
 
